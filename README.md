@@ -10,4 +10,5 @@
 | ------------------------------------------------------------------ |
 | [專題題目說明](pdfs/專題題目說明_0512.pdf)                                          |
 | [ER model, relational schema](pdfs/ER_model_relational_schema.pdf) |
+| [系統架構](pdfs/系統架構.pdf) |
 
