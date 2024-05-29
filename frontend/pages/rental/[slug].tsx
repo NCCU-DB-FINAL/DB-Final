@@ -3,9 +3,10 @@ import { useRouter } from "next/router";
 import { title } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
-export default function ApiTestPage() {
+export default function RentalPage() {
   const router = useRouter();
 
+  // 可以參考 pages/apiTest/user/[slug].tsx 根據 id 打 API
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
