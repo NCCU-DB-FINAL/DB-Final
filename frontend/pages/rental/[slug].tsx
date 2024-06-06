@@ -8,7 +8,6 @@ import {
   Divider, 
   Image, 
   Spacer,
-  Input,
   Button,
   Table, 
   TableHeader, 
@@ -16,11 +15,20 @@ import {
   TableBody, 
   TableRow, 
   TableCell, 
-  getKeyValue,} from "@nextui-org/react";
+  getKeyValue,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+  ModalContent,
+  Textarea} from "@nextui-org/react";
   import React, {useState} from "react";
   import Rating from 'react-rating-stars-component';
   import { MdFavorite, MdFavoriteBorder } from "react-icons/md";
   import Swal from 'sweetalert2';
+
+
 
 
   //要先從其他頁面get到房子的ID 透過ID來呈現頁面
@@ -44,15 +52,19 @@ import {
 
 
     const [comment, setComment] = useState("");
-    
     const [rating, setRating] = useState<number>(0);
+    const {isOpen, onOpen, onOpenChange} = useDisclosure();
+
     const handleChange = (value : number) => {
       setRating(value);
     };
+
     const handleSubmit = () => {
       console.log("星星數量:", rating);
       console.log("評論:", comment);
       // 在這裡執行提交後的操作，比如發送給後端保存等
+      setRating(0);
+      setComment("");
 
 
       Swal.fire({
@@ -98,25 +110,29 @@ import {
         },
         {
           "Timestamp": "2023-02-15",
-          "rating": 3,
+          "rating": 4,
           "comment": "這是一個範例評論5"
         }
       ]
 
       
     };
+
+    const totalReviews = data.reviews.length;
+    const averageRating = data.reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews;
+
     const columns = [
       {
         key: "Timestamp",
-        label: "TimeStamp",
+        label: "評論時間",
       },
       {
         key: "rating",
-        label: "Rating",
+        label: "評分",
       },
       {
         key: "comment",
-        label: "Comment",
+        label: "留言",
       },
     ]
     
@@ -196,43 +212,89 @@ import {
             </CardFooter>
           </Card>
 
-          <Spacer y={10} />
+          
 
 
-        <div>
-          <Input
-            label="請輸入房屋評論"
-            className="max-w-[600px]"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            color="primary"
-          />
-          <Rating
-            count={5}
-            value={rating}
-            onChange={handleChange}
-            size={20}
-            activeColor="#ffd700"
-          />
-
-          <Button onClick={handleSubmit}>送出評論</Button>
-        </div>
+        
 
 
       <Spacer y={10} />
-      <Table aria-label="Example table with dynamic content">
-        <TableHeader columns={columns}>
-          {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
-        </TableHeader>
-        <TableBody items={data.reviews}>
-          {(item) => (
-            <TableRow key={item.Timestamp}>
-              {(columnKey) => <TableCell>{getKeyValue(item, columnKey)}</TableCell>}
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <div className="flex justify-between mt-4">
+            <p className="text-default-500">平均評分: {averageRating.toFixed(2)}</p>
+            <p className="text-small text-default-500">{totalReviews} 篇評論</p>
 
+          </div>
+      <Table aria-label="Example table with dynamic content">
+            <TableHeader columns={columns}>
+              {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
+            </TableHeader>
+            <TableBody items={data.reviews}>
+              {(item) => (
+                <TableRow key={item.comment}>
+                  {(columnKey) => (
+                    <TableCell className={columnKey === "comment" ? "text-left" : ""}>
+                      {columnKey === "rating" ? (
+                        <Rating
+                          count={5}
+                          value={item[columnKey]}
+                          size={20}
+                          edit={false}
+                          activeColor="#ffd700"
+                        />
+                      ) : (
+                        getKeyValue(item, columnKey)
+                      )}
+                    </TableCell>
+                  )}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          <Spacer y={10} />
+          
+
+        
+      <Button onPress={onOpen} color="primary">我要評論</Button>
+      <Modal 
+        isOpen={isOpen} 
+        onOpenChange={onOpenChange}
+        placement="top-center"
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">寫下我的評論</ModalHeader>
+              <ModalBody >
+                <Textarea
+                  label=""
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  color="primary"
+                />
+
+                <Rating
+                  count={5}
+                  value={rating}
+                  onChange={handleChange}
+                  size={20}
+                  activeColor="#ffd700"
+                />
+                
+  
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="flat" onPress={onClose}>
+                  Close
+                </Button>
+                <Button color="primary" onClick={handleSubmit}>
+                  送出
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
         
         </div>
       </section>
