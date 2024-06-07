@@ -12,3 +12,10 @@
 | [ER model, relational schema](pdfs/ER_model_relational_schema.pdf) |
 | [系統架構](pdfs/系統架構.pdf) |
 
+---
+
+## 開發
+Run backend
+1. `git clone https://github.com/NCCU-DB-FINAL/backend.git`
+2. `python main.py`
+

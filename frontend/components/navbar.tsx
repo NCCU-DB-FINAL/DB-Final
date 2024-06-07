@@ -1,48 +1,29 @@
 import {
-  Button,
-  Kbd,
   Link,
-  Input,
   Navbar as NextUINavbar,
   NavbarContent,
   NavbarMenu,
-  NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
   NavbarMenuItem,
   link as linkStyles,
   button as buttonStyles,
+  Button,
+  User,
 } from "@nextui-org/react";
 import NextLink from "next/link";
 import clsx from "clsx";
+import { usePathname } from "next/navigation";
+
+import { useAuth } from "./hooks/useAuth";
 
 import { siteConfig } from "@/config/site";
-import { SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/icons";
-import { usePathname } from "next/navigation";
 
 export const Navbar = () => {
   const pathname = usePathname();
-  const searchInput = (
-    <Input
-      aria-label="Search"
-      classNames={{
-        inputWrapper: "bg-default-100",
-        input: "text-sm",
-      }}
-      endContent={
-        <Kbd className="hidden lg:inline-block" keys={["command"]}>
-          K
-        </Kbd>
-      }
-      labelPlacement="outside"
-      placeholder="Search..."
-      startContent={
-        <SearchIcon className="text-base text-default-400 pointer-events-none flex-shrink-0" />
-      }
-      type="search"
-    />
-  );
+
+  const { user, isLoggedIn, logout, getUserType } = useAuth();
 
   return (
     <NextUINavbar maxWidth="xl" position="sticky">
@@ -59,7 +40,7 @@ export const Navbar = () => {
               <NextLink
                 className={clsx(
                   linkStyles({ color: "foreground" }),
-                  "data-[active=true]:text-primary data-[active=true]:font-medium"
+                  "data-[active=true]:text-primary data-[active=true]:font-medium",
                 )}
                 color="foreground"
                 href={item.href}
@@ -75,36 +56,45 @@ export const Navbar = () => {
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        {/* <NavbarItem className="hidden lg:flex">{searchInput}</NavbarItem> */}
-        <NavbarItem className="hidden lg:flex gap-3">
-          {/* TODO 登入後才能刊登 */}
-          <NextLink
-            className={buttonStyles({
-              color: "primary",
-              variant: "bordered",
-            })}
-            href="/publish"
-          >
-            刊登
-          </NextLink>
-        </NavbarItem>
-        <NavbarItem className="hidden lg:flex gap-3">
-          <NextLink
-            className={buttonStyles({
-              color: "primary",
-              variant: "solid",
-            })}
-            href="/login"
-          >
-            登入
-          </NextLink>
-        </NavbarItem>
-
-        {/* <NavbarMenuToggle /> */}
+        {isLoggedIn() ? (
+          <>
+            <NavbarItem className="lg:flex gap-3">
+              <User description={getUserType()} name={user?.name} />
+            </NavbarItem>
+            <NavbarItem className="lg:flex gap-3">
+              <Button variant="ghost" onClick={logout}>
+                登出
+              </Button>
+            </NavbarItem>
+            <NavbarItem className="lg:flex gap-3">
+              {/* TODO: 只有房東能刊登 */}
+              <NextLink
+                className={buttonStyles({
+                  color: "primary",
+                  variant: "solid",
+                })}
+                href="/publish"
+              >
+                刊登
+              </NextLink>
+            </NavbarItem>
+          </>
+        ) : (
+          <NavbarItem className="lg:flex gap-3">
+            <NextLink
+              className={buttonStyles({
+                color: "primary",
+                variant: "solid",
+              })}
+              href="/login"
+            >
+              登入
+            </NextLink>
+          </NavbarItem>
+        )}
       </NavbarContent>
 
       <NavbarMenu>
-        {/* {searchInput} */}
         <div className="mx-4 mt-2 flex flex-col gap-2">
           {siteConfig.navMenuItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
