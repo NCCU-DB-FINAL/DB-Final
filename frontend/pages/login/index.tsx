@@ -55,9 +55,9 @@ export function LoginForm() {
         selectedType as string,
       );
 
-      if (loginRes && loginRes.user_id) {
+      if (loginRes && loginRes.access_token) {
         const user = {
-          id: loginRes.user_id,
+          id: loginRes.access_token,
           name: username,
           type: selectedType as string,
         };
