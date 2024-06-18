@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, createContext } from "react";
 
 export interface User {
-  id: string;
+  token: string;
   name: string;
   type: string;
 }
