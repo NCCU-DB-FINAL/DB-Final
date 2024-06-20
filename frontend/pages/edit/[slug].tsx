@@ -4,30 +4,129 @@ import { Input, Spacer, Button, Select, SelectItem } from '@nextui-org/react';
 import Swal from 'sweetalert2';
 import { taiwanCities, TaiwanCities } from "@/rental_data/taiwan";
 import { useRouter } from "next/router";
+import { useAuth } from "@/components/hooks/useAuth";
+
+
+async function getRentalData(id: number) {
+  try {
+    const res = await fetch(`${process.env.API_URL}/rental/${id}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+    }
+
+    const data = await res.json();
+    return data;
+} catch (error) {
+    console.error('Error fetching rental data:', error);
+    return undefined;
+}
+}
+
+async function editRental(slug : number, address: string, price: string, type: string, bedroom: string, living_room: string, bathroom: string, ping: string, rental_term: string, token: string) {
+  const res = await fetch(`${process.env.API_URL}/rental/${slug}`, {
+    method: "PUT",
+    headers: {
+      "content-type": "application/json",
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      address,
+      price,
+      type,
+      bedroom,
+      living_room,
+      bathroom,
+      ping,
+      rental_term,
+    }),
+
+  });
+
+  if (!res.ok) return undefined;
+  return res.json();
+}
 
 export default function EditPage() {
     const router = useRouter();
+    const { slug } = router.query;
+    const {user} = useAuth();
+    const token = user?.token || "no_token";
+    const [selectedCity, setSelectedCity] = useState("");
+    const [selectedDistrict, setSelectedDistrict] = useState("");
+    const [detailedAddress, setDetailedAddress] = useState("");
+
+    const id = parseInt(slug, 10);
+    const [rentalData, setRentalData] = useState<RentalData | null>(null);
+
 
 
     const [form, setForm] = useState({
-      address: '台北市, 文山區,原始地址',
-      price: '原始價錢',
-      type: '雅房',
-      bedroom: '原始房間數',
-      living_room: '原始客廳',
-      bathroom: '原始廁所',
-      ping: '原始坪數',
-      rental_term: '原始租期',
-      landLord_id: ''
+      address: '',
+      price: '',
+      type: '',
+      bedroom: '',
+      living_room: '',
+      bathroom: '',
+      ping: '',
+      rental_term: '',
     });
-  
-    const [selectedCity, setSelectedCity] = useState("台北市");
-    const [selectedDistrict, setSelectedDistrict] = useState("文山區");
-    const [detailedAddress, setDetailedAddress] = useState("原始地址");
+
+
+    
+    //value好像只能是string 如果有問題可以看看這個原因
+    
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          getRentalData(id).then(data => {
+            if (data) {
+                console.log('Rental data:', data);
+              
+                setForm({
+                  address: data.Address,
+                  price: data.Price,
+                  type: data.Type,
+                  bedroom: data.Bedroom.toString(),
+                  living_room: data.LivingRoom.toString(),
+                  bathroom: data.Bathroom.toString(),
+                  ping: data.Ping,
+                  rental_term: data.RentalTerm,
+                });
+      
+
+                const addressArray = data.Address.split(',');
+                if (addressArray.length === 3) {
+                  setSelectedCity(addressArray[0]); 
+                  setSelectedDistrict(addressArray[1]);                                
+                  setDetailedAddress(addressArray[2]);
+                }
+                 
+            } else {
+                console.log('Failed to fetch rental data.');
+            }
+        });
+
+        } catch (error) {
+          window.alert(`系統錯誤 ${error}`);
+          console.error("Error when login", error);
+        }
+      };
+    
+      fetchData();
+    
+    }, [slug]);
+    
+
     
     const handleInputChange = (field: string, value: string) => {
-        setForm({ ...form, [field]: value });
-    
+      setForm({ ...form, [field]: value });
       };
 
     const handleCityChange = (value: string) => {
@@ -52,40 +151,37 @@ export default function EditPage() {
     
   
     //提交到後端API
-    const handleSubmit = () => { 
+    const handleSubmit = async() => { 
 
+      try {
 
-    console.log('Form after setForm:', form);
+        console.log('Form after setForm:', form);
+        const response = await editRental(id, form.address, form.price, form.type, form.bedroom, form.living_room, form.bathroom, form.ping, form.rental_term, token);
+        
 
-      Swal.fire({
-        icon: 'success',
-        title: '已成功編輯',
-        confirmButtonText: '回主頁',
-  
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = '/'
-        } 
-      });  
-  
-      // Swal.fire({
-      //   icon: 'error',
-      //   title: '提交失敗',
-      //   text: '請重新嘗試！',
-      // });
-  
-      setForm({
-        address: '',
-        price: '',
-        type: '',
-        bedroom: '',
-        living_room: '',
-        bathroom: '',
-        ping: '',
-        rental_term: '',
-        landLord_id: ''
-      });
-  
+        if(response) {
+          Swal.fire({
+            icon: 'success',
+            title: '已成功編輯',
+            confirmButtonText: '回主頁',
+      
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = '/'
+            } 
+          });  
+        }
+        else {
+          Swal.fire({
+            icon: 'error',
+            title: '提交失敗',
+            text: '請重新嘗試！',
+          });
+        }
+      } catch (error) {
+        window.alert(`系統錯誤 ${error}`);
+        console.error("Error when postRental", error);
+      }
       
     };
   
@@ -101,9 +197,10 @@ export default function EditPage() {
   
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
               <Select
-                label="縣市"
+                label="縣市"       
+                defaultSelectedKeys={[selectedCity]}
+                selectedKeys={[selectedCity]}
                 value={selectedCity}
-                defaultSelectedKeys={['台北市']}
                 onChange={(e) => handleCityChange(e.target.value)}
               >
                 {Object.keys(taiwanCities).map((city) => (
@@ -115,8 +212,7 @@ export default function EditPage() {
          
               <Select
                 label="鄉鎮[市]區"
-                value={selectedDistrict}
-                defaultSelectedKeys={['文山區']}
+                value={selectedDistrict}                
                 onChange={(e) => handleDistrictChange(e.target.value)}
               >
                 {taiwanCities[selectedCity]?.map((district : string) => (
@@ -140,6 +236,7 @@ export default function EditPage() {
               size="lg"
               label="價格"
               placeholder=" "
+              
               value={form.price}
               onChange={(e) => handleInputChange('price', e.target.value)}
               onClear={() => handleInputChange('price', '')}   
@@ -155,7 +252,8 @@ export default function EditPage() {
                 ]}
                 label="請選擇房型"
                 placeholder=" "
-                defaultSelectedKeys={['雅房']}
+                defaultSelectedKeys={[form.type]}
+                selectedKeys={[form.type]}
                 value={form.type}
                 onChange={(value) => {
                   handleInputChange('type', value.target.value);
@@ -175,13 +273,14 @@ export default function EditPage() {
               onChange={(e) => handleInputChange('bedroom', e.target.value)}
               onClear={() => handleInputChange('bedroom', '')} 
             />
+
             <Spacer y={2} />
             <Input
               isClearable
               size="lg"
               label="客廳數"
               placeholder=" "
-              value={form.living_room }
+              value={form.living_room}
               onChange={(e) => handleInputChange('living_room', e.target.value)}
               onClear={() => handleInputChange('living_room', '')} 
             />
@@ -192,7 +291,7 @@ export default function EditPage() {
               size="lg"
               label="廁所數"
               placeholder=" "
-              value={form.bathroom }
+              value={form.bathroom}
               onChange={(e) => handleInputChange('bathroom', e.target.value)}
               onClear={() => handleInputChange('bathroom', '')} 
             />

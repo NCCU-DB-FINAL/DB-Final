@@ -3,7 +3,33 @@ import { useState } from 'react';
 import { Input, Spacer, Button, Select, SelectItem } from '@nextui-org/react';
 import Swal from 'sweetalert2';
 import { taiwanCities, TaiwanCities } from "@/rental_data/taiwan";
+import { useAuth } from "@/components/hooks/useAuth";
 
+
+
+async function postRental(address: string, price: string, type: string, bedroom: string, living_room: string, bathroom: string, ping: string, rental_term: string, token : string) {
+  const res = await fetch(`${process.env.API_URL}/rental`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      address,
+      price,
+      type,
+      bedroom,
+      living_room,
+      bathroom,
+      ping,
+      rental_term,
+    }),
+  });
+
+  if (!res.ok) return undefined;
+
+  return res.json();
+}
 
 export default function PublishPage() {
   const [form, setForm] = useState({
@@ -15,13 +41,17 @@ export default function PublishPage() {
     bathroom: '',
     ping: '',
     rental_term: '',
-    landLord_id: ''
+
   });
 
+  
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [detailedAddress, setDetailedAddress] = useState("");
+  const {user} = useAuth();
+  const token = user?.token || "no_token";
 
+  
   const handleCityChange = (value: string) => {
     setSelectedCity(value);
     setSelectedDistrict(""); // 重置地區
@@ -47,7 +77,7 @@ export default function PublishPage() {
   };
 
   //提交到後端API
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
 
     // const input_address = [selectedCity, selectedDistrict, detailedAddress].filter(Boolean).join(", ");
     // console.log('input', input_address);
@@ -55,26 +85,41 @@ export default function PublishPage() {
 
 
     console.log('Form after setForm:', form);
-    Swal.fire({
-      icon: 'success',
-      title: '已成功刊登',
-      confirmButtonText: '回主頁',
-      showCancelButton: true,
-      cancelButtonText: '繼續刊登'
-
-    }).then((result) => {
-      if (result.isConfirmed) {
-        window.location.href = '/'
-      } else if (result.isDismissed) {
+    
+    try {
+    const response = await postRental(form.address, form.price, form.type, form.bedroom, form.living_room, form.bathroom, form.ping, form.rental_term, token);
+    
+    if (response) {
+      Swal.fire({
+        icon: 'success',
+        title: '已成功刊登',
+        confirmButtonText: '回主頁',
+        showCancelButton: true,
+        cancelButtonText: '繼續刊登'
+  
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = '/'
+        } else if (result.isDismissed) {
+          window.location.reload();
+        }
+      });  
+    }
+    else{
+      Swal.fire({
+        icon: 'error',
+        title: '提交失敗',
+        text: '請重新嘗試！',
+      }).then(() => {
         window.location.reload();
-      }
-    });  
+      })
+    }
+  }catch (error){
+      window.alert(`系統錯誤 ${error}`);
+      console.error("Error when postRental", error);
 
-    // Swal.fire({
-    //   icon: 'error',
-    //   title: '提交失敗',
-    //   text: '請重新嘗試！',
-    // });
+    }
+    
 
     setForm({
       address: '',
@@ -85,7 +130,6 @@ export default function PublishPage() {
       bathroom: '',
       ping: '',
       rental_term: '',
-      landLord_id: ''
     });
 
     
