@@ -23,103 +23,264 @@ import {
   useDisclosure,
   ModalContent,
   Textarea} from "@nextui-org/react";
-  import React, {useState} from "react";
+  import React, {useEffect, useState} from "react";
   import Rating from 'react-rating-stars-component';
   import { MdFavorite, MdFavoriteBorder } from "react-icons/md";
   import Swal from 'sweetalert2';
+  import { useAuth } from "@/components/hooks/useAuth";
+
+  interface Review {
+    Timestamp: string;
+    Rating: number;
+    Comment: string;
+  }
+  
+  interface RentalData {
+    R_id: number;
+    Address: string;
+    Price: string; // 注意：你的 API 返回的数据是字符串
+    Type: string;
+    Bedroom: number;
+    LivingRoom: number;
+    Bathroom: number;
+    Ping: string;
+    RentalTerm: string;
+    PostDate: string;
+    L_name: string;
+    L_PhoneNum: string;
+    Reviews: Review[];
+  }
+
+  interface LikeData {
+    R_id: number;
+    Address: string;
+    Price: number;
+    Type: string;
+    Bedroom: number;
+    LivingRoom: number;
+    Bathroom: number;
+    Ping: number;
+    RentalTerm: string;
+    PostDate: string;
+    L_id: number;
+  }
+
+  async function checkUserLike(token: string) {
+    const res = await fetch(`${process.env.API_URL}/like`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  
+    if (!res.ok) return undefined;
+    return res.json();
+  }
+
+  async function getRentalData(id: number) {
+      try {
+        const res = await fetch(`${process.env.API_URL}/rental/${id}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching rental data:', error);
+        return undefined;
+    }
+  }
+
+  async function addLike(rental_id: number, token: string) {
+    const res = await fetch(`${process.env.API_URL}/like`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        rental_id
+      }),
+    });
+  
+    if (!res.ok) return undefined;
+  
+    return res.json();
+  }
+
+  async function deleteLike(rental_id : number, token: string) {
+    const res = await fetch(`${process.env.API_URL}/like`, {
+      method: "DELETE",
+      headers: {
+        "content-type": "application/json",
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        rental_id
+      }),
+    });
+  
+    if (!res.ok) return undefined; 
+  
+    return res.json();
+  }
 
 
-
+  async function postComment(rating: number,comment: string, token: string, rental_id: number) {
+    const res = await fetch(`${process.env.API_URL}/comment/${rental_id}`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        rating,
+        comment
+      }),
+    });
+  
+    if (!res.ok) return undefined;
+  
+    return res.json();
+  }
 
   //要先從其他頁面get到房子的ID 透過ID來呈現頁面
 
   export default function RentalPage() {
     const router = useRouter();
-    
-
+    const { slug } = router.query;
+    const { user, isLoggedIn} = useAuth();
+    const [likedIds, setLikedIds] = useState<number[]>([]);
     const [favorite, setFavorite] = useState(false);
+    const [comment, setComment] = useState("");
+    const [rating, setRating] = useState<number>(0);
+    const {isOpen, onOpen, onOpenChange} = useDisclosure();
+    const token = user?.token || "no_token";
+    const [rentalData, setRentalData] = useState<RentalData | null>(null);
+
+    const id = parseInt(slug, 10);
+
+
+    
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          getRentalData(id).then(data => {
+            if (data) {
+                setRentalData(data);
+                console.log('Rental data fetched:', data);
+                 
+            } else {
+                console.log('Failed to fetch rental data.');
+            }
+        });
+
+        } catch (error) {
+          window.alert(`系統錯誤 ${error}`);
+          console.error("Error when login", error);
+        }
+      };
+    
+      fetchData();
+    
+    }, [slug]);
+
+   
+    useEffect(() => {
+      const fetchLikes = async () => {
+        try {
+          if (isLoggedIn()) {
+            const likeData = await checkUserLike(token);
+            const likedIds = likeData.likes.map((likes: LikeData) => likes.R_id);
+            setLikedIds(likedIds);
+  
+            if (slug && likedIds.includes(Number(slug))) {
+              setFavorite(true);
+            } else {
+              setFavorite(false);
+            }
+          }
+        } catch (error) {
+          
+          console.error('Error fetching likes:', error);
+        }
+      };
+  
+      if (isLoggedIn()) {
+        fetchLikes();
+      }
+    }, [isLoggedIn(), slug]);
+
+   
     const toggleFavorite = () => {
       setFavorite((prev) => {
         const newFavoriteState = !prev;
         if (newFavoriteState) {
-          console.log('已加入收藏');
+          addLike(id, token);
+          checkUserLike(token);
+          console.log('收藏');
+
+  
         } else {
-          console.log('已取消收藏');
+          deleteLike(id, token);
+          checkUserLike(token);
+          console.log('取消收藏');
         }
         return newFavoriteState;
       });
     };
 
 
-    const [comment, setComment] = useState("");
-    const [rating, setRating] = useState<number>(0);
-    const {isOpen, onOpen, onOpenChange} = useDisclosure();
-
     const handleChange = (value : number) => {
       setRating(value);
     };
 
-    const handleSubmit = () => {
+
+    const handleSubmit = async() => {
       console.log("星星數量:", rating);
       console.log("評論:", comment);
       // 在這裡執行提交後的操作，比如發送給後端保存等
+      const result = await postComment(rating,comment, token, id);  
       setRating(0);
       setComment("");
 
-
-      Swal.fire({
-        icon: 'success',
-        title: '已成功評論',
-      })
+      if (result != undefined) {
+        Swal.fire({
+          icon: 'success',
+          title: '已成功評論',
+        }).then(() => {
+          window.location.reload();
+        });
+      }else {
+        Swal.fire({
+          icon: 'error',
+          title: '評論失敗',
+        })
+      }
     };
 
     
     const data = { // Declare the 'data' variable
-      id: 1,
-      address: "台北市文山區指南路二段64號",
-      price: "30,000",
-      Type: "雅房",
-      Bedroom: "2",
-      LivingRoom: "3",
-      Bathroom: "2",
-      Ping: "30",
-      RentalTerm: "一年",
-      PostDate : "2022-05-21",
-      L_Name : "王小明",
-      L_Phone : "0912345678",
-      reviews: [
-        {
-            "Timestamp": "2023-05-21",
-            "rating": 4,
-            "comment": "4星好評"
-        },
-        {
-            "Timestamp": "2023-04-10",
-            "rating": 5,
-            "comment": "這是一個範例評論2"
-        },
-        {
-            "Timestamp": "2023-02-16",
-            "rating": 3,
-            "comment": "這是一個範例評論3"
-        },
-        {
-          "Timestamp": "2023-02-17",
-          "rating": 3,
-          "comment": "測試測試"
-        },
-        {
-          "Timestamp": "2023-02-15",
-          "rating": 4,
-          "comment": "這是一個範例評論5"
-        }
-      ]
 
-      
+      Reviews: []   
     };
 
-    const totalReviews = data.reviews.length;
-    const averageRating = data.reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviews;
+    data.Reviews = rentalData?.Reviews || [];
+
+    
+    
+
+    const totalReviews = data.Reviews.length;
+    const averageRating = data.Reviews.reduce((acc, review) => acc + review.Rating, 0) / totalReviews;
 
     const columns = [
       {
@@ -127,11 +288,11 @@ import {
         label: "評論時間",
       },
       {
-        key: "rating",
+        key: "Rating",
         label: "評分",
       },
       {
-        key: "comment",
+        key: "Comment",
         label: "留言",
       },
     ]
@@ -150,22 +311,30 @@ import {
                 alt="nextui logo"
                 height={40}
                 radius="sm"
-                src="https://cdn.discordapp.com/attachments/1035612885721821319/1247852507820986430/5njp9yPKp9.png?ex=666188b5&is=66603735&hm=bb6a05a2cb0b5a6f9bc7c2f856c7a207512df5becbfddd1cde4765866b579bf2&"
+                src="https://cdn-icons-png.freepik.com/512/195/195492.png"
                 width={40}
               />
       
 
-              <p className="text-small text-default-500">聯絡人 : {data.L_Name}</p>
-              <p className="text-small text-default-500">連絡電話 : {data.L_Phone}</p>
-            
+              <p className="text-small text-default-500">聯絡人 : {rentalData?.L_Name}</p>
+              <p className="text-small text-default-500">連絡電話 : {rentalData?.L_PhoneNum}</p>
+
+             
+              {isLoggedIn() ? (
               <button onClick={toggleFavorite} className="top-rated-car-react-button">
+                
                 {favorite ? (
                   <MdFavorite style={{ color: "#F76631" , fontSize :"24px" }} />
                 ) : (
                   <MdFavoriteBorder style={{ color: "#F76631" ,fontSize :"24px"}} />
                 )}
               </button>
-
+              ) : (
+                <MdFavoriteBorder style={{ color: "#F76631", fontSize: "24px" }} />
+                
+              )}
+          
+            
 
   
             </CardHeader>
@@ -175,24 +344,25 @@ import {
             <CardBody>
               <h4 className="font-bold text-large">房屋地址</h4>
               <Spacer y={2} />
-              <p>{data.address}</p>
+              <p>{rentalData?.Address}</p>
+              
             </CardBody>
             <Divider/>
 
             <Divider/>
             <CardBody>
-              <h4 className="font-bold text-large">{data.Type}</h4>
+              <h4 className="font-bold text-large">{rentalData?.Type}</h4>
               
               <Spacer y={2} />
               <div className="flex h-6 items-center space-x-6 text-small">
               
-              <p>廁所 : {data.Bathroom}</p>
+              <p>廁所 : {rentalData?.Bathroom}</p>
               <Divider orientation="vertical" />
-              <p>客廳 : {data.LivingRoom}</p>
+              <p>客廳 : {rentalData?.LivingRoom}</p>
               <Divider orientation="vertical" />
-              <p>房間 : {data.Bedroom}</p>
+              <p>房間 : {rentalData?.Bedroom}</p>
               <Divider orientation="vertical" />
-              <p>坪數 : {data.Ping}</p>
+              <p>坪數 : {rentalData?.Ping}</p>
               <Spacer y={2} /> 
               </div>
             </CardBody>
@@ -200,15 +370,15 @@ import {
 
             <Divider/>
             <CardBody>
-              <h4 className="font-bold text-large">租期{data.RentalTerm}</h4>
+              <h4 className="font-bold text-large">租期 {rentalData?.RentalTerm}</h4>
               <Spacer y={2} />
-              <p>{data.price}/月</p>
+              <p>{rentalData?.Price}</p>
             </CardBody>
             <Divider/>
 
             
             <CardFooter>
-              <p className="text-small text-default-500">發布日期 : {data.PostDate}</p>
+              <p className="text-small text-default-500">發布日期 : {rentalData?.PostDate}</p>
             </CardFooter>
           </Card>
 
@@ -228,12 +398,12 @@ import {
             <TableHeader columns={columns}>
               {(column) => <TableColumn key={column.key}>{column.label}</TableColumn>}
             </TableHeader>
-            <TableBody items={data.reviews}>
+            <TableBody items={data.Reviews}>
               {(item) => (
-                <TableRow key={item.comment}>
+                <TableRow key={item.Comment}>
                   {(columnKey) => (
-                    <TableCell className={columnKey === "comment" ? "text-left" : ""}>
-                      {columnKey === "rating" ? (
+                    <TableCell className={columnKey === "Comment" ? "text-left" : ""}>
+                      {columnKey === "Rating" ? (
                         <Rating
                           count={5}
                           value={item[columnKey]}
@@ -248,14 +418,20 @@ import {
                   )}
                 </TableRow>
               )}
+   
             </TableBody>
           </Table>
 
           <Spacer y={10} />
           
 
-        
+      {isLoggedIn() ? (
       <Button onPress={onOpen} color="primary">我要評論</Button>
+      ) : (
+        <p className="text-small text-default-500">登入使用評論功能</p>
+      )}
+     
+        
       <Modal 
         isOpen={isOpen} 
         onOpenChange={onOpenChange}
