@@ -7,7 +7,7 @@ import { useAuth } from "@/components/hooks/useAuth";
 
 
 
-async function postRental(address: string, price: string, type: string, bedroom: string, living_room: string, bathroom: string, ping: string, rental_term: string, token : string) {
+async function postRental(address: string, title :string , price: number, type: string, bedroom: number, living_room: number, bathroom: number, ping: number, rental_term: string, token : string) {
   const res = await fetch(`${process.env.API_URL}/rental`, {
     method: "POST",
     headers: {
@@ -16,6 +16,7 @@ async function postRental(address: string, price: string, type: string, bedroom:
     },
     body: JSON.stringify({
       address,
+      title,
       price,
       type,
       bedroom,
@@ -34,6 +35,7 @@ async function postRental(address: string, price: string, type: string, bedroom:
 export default function PublishPage() {
   const [form, setForm] = useState({
     address: '',
+    title: '',
     price: '',
     type: '',
     bedroom: '',
@@ -66,7 +68,7 @@ export default function PublishPage() {
     const detailedAddressValue = event.target.value;
     setDetailedAddress(detailedAddressValue);
 
-    const input_address = [selectedCity, selectedDistrict, detailedAddressValue].filter(Boolean).join(", ");
+    const input_address = [selectedCity, selectedDistrict, detailedAddressValue].filter(Boolean).join(" ");
     handleInputChange('address', input_address.toString());
     
   };
@@ -87,7 +89,7 @@ export default function PublishPage() {
     console.log('Form after setForm:', form);
     
     try {
-    const response = await postRental(form.address, form.price, form.type, form.bedroom, form.living_room, form.bathroom, form.ping, form.rental_term, token);
+    const response = await postRental(form.address, form.title, parseFloat(form.price), form.type, parseInt(form.bedroom, 10), parseInt(form.living_room,10),  parseInt(form.bathroom,10),  parseFloat(form.ping), form.rental_term, token);
     
     if (response) {
       Swal.fire({
@@ -123,6 +125,7 @@ export default function PublishPage() {
 
     setForm({
       address: '',
+      title: '',
       price: '',
       type: '',
       bedroom: '',
@@ -174,8 +177,20 @@ export default function PublishPage() {
               onChange={handleDetailedAddressChange}
             />
         </div>
+  
+       
+          <Spacer y={2} />
 
           <form onSubmit={(e) => e.preventDefault()}>
+          <Input
+            isClearable
+            size="lg"
+            label="補充資訊"
+            placeholder=" "
+            value={form.title}
+            onChange={(e) => handleInputChange('title', e.target.value)}
+            onClear={() => handleInputChange('title', '')}   
+          />
           <Spacer y={2} />
           <Input
             isClearable

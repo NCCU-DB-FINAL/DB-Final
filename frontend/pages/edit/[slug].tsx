@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "@/components/hooks/useAuth";
 
 
+
 async function getRentalData(id: number) {
   try {
     const res = await fetch(`${process.env.API_URL}/rental/${id}`, {
@@ -29,7 +30,7 @@ async function getRentalData(id: number) {
 }
 }
 
-async function editRental(slug : number, address: string, price: string, type: string, bedroom: string, living_room: string, bathroom: string, ping: string, rental_term: string, token: string) {
+async function editRental(slug : number, address: string, title :string , price: number, type: string, bedroom: number, living_room: number, bathroom: number, ping: number, rental_term: string, token : string) {
   const res = await fetch(`${process.env.API_URL}/rental/${slug}`, {
     method: "PUT",
     headers: {
@@ -38,6 +39,7 @@ async function editRental(slug : number, address: string, price: string, type: s
     },
     body: JSON.stringify({
       address,
+      title, 
       price,
       type,
       bedroom,
@@ -63,12 +65,13 @@ export default function EditPage() {
     const [detailedAddress, setDetailedAddress] = useState("");
 
     const id = parseInt(slug, 10);
-    const [rentalData, setRentalData] = useState<RentalData | null>(null);
+    //const [rentalData, setRentalData] = useState<RentalData | null>(null);
 
 
 
     const [form, setForm] = useState({
       address: '',
+      title : '',
       price: '',
       type: '',
       bedroom: '',
@@ -91,6 +94,7 @@ export default function EditPage() {
               
                 setForm({
                   address: data.Address,
+                  title: data.title,
                   price: data.Price,
                   type: data.Type,
                   bedroom: data.Bedroom.toString(),
@@ -101,7 +105,7 @@ export default function EditPage() {
                 });
       
 
-                const addressArray = data.Address.split(',');
+                const addressArray = data.Address.split(' ');
                 if (addressArray.length === 3) {
                   setSelectedCity(addressArray[0]); 
                   setSelectedDistrict(addressArray[1]);                                
@@ -122,6 +126,9 @@ export default function EditPage() {
       fetchData();
     
     }, [slug]);
+
+    //console.log('Form:', form);
+
     
 
     
@@ -143,7 +150,7 @@ export default function EditPage() {
       const detailedAddressValue = event.target.value;
       setDetailedAddress(detailedAddressValue);
   
-      const input_address = [selectedCity, selectedDistrict, detailedAddressValue].filter(Boolean).join(", ");
+      const input_address = [selectedCity, selectedDistrict, detailedAddressValue].filter(Boolean).join(" ");
       handleInputChange('address', input_address.toString());
       
     };
@@ -156,7 +163,7 @@ export default function EditPage() {
       try {
 
         console.log('Form after setForm:', form);
-        const response = await editRental(id, form.address, form.price, form.type, form.bedroom, form.living_room, form.bathroom, form.ping, form.rental_term, token);
+        const response = await editRental(id, form.address, form.title, parseFloat(form.price), form.type, parseInt(form.bedroom, 10), parseInt(form.living_room,10),  parseInt(form.bathroom,10),  parseFloat(form.ping), form.rental_term, token);
         
 
         if(response) {
@@ -228,8 +235,17 @@ export default function EditPage() {
                 onChange={handleDetailedAddressChange}
               />
           </div>
-  
+          <Spacer y={2} />
             <form onSubmit={(e) => e.preventDefault()}>
+            <Input
+              isClearable
+              size="lg"
+              label="補充資訊"
+              placeholder=" "
+              value={form.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              onClear={() => handleInputChange('title', '')}   
+            />
             <Spacer y={2} />
             <Input
               isClearable

@@ -37,8 +37,9 @@ import {
   
   interface RentalData {
     R_id: number;
+    title: string;
     Address: string;
-    Price: string; // 注意：你的 API 返回的数据是字符串
+    Price: string;
     Type: string;
     Bedroom: number;
     LivingRoom: number;
@@ -53,6 +54,7 @@ import {
 
   interface LikeData {
     R_id: number;
+    title : string;
     Address: string;
     Price: number;
     Type: string;
@@ -66,7 +68,7 @@ import {
   }
 
   async function checkUserLike(token: string) {
-    const res = await fetch(`${process.env.API_URL}/like`, {
+    const res = await fetch(`${process.env.API_URL}/likes`, {
       method: "GET",
       headers: {
         "content-type": "application/json",
@@ -102,7 +104,7 @@ import {
 
   async function addLike(rental_id: number, token: string) {
     const res = await fetch(`${process.env.API_URL}/like`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         "content-type": "application/json",
         'Authorization': `Bearer ${token}`,
@@ -158,8 +160,7 @@ import {
   export default function RentalPage() {
     const router = useRouter();
     const { slug } = router.query;
-    const { user, isLoggedIn} = useAuth();
-    const [likedIds, setLikedIds] = useState<number[]>([]);
+    const { user, isLoggedIn} = useAuth(); 
     const [favorite, setFavorite] = useState(false);
     const [comment, setComment] = useState("");
     const [rating, setRating] = useState<number>(0);
@@ -200,8 +201,9 @@ import {
         try {
           if (isLoggedIn()) {
             const likeData = await checkUserLike(token);
-            const likedIds = likeData.likes.map((likes: LikeData) => likes.R_id);
-            setLikedIds(likedIds);
+            //console.log('Like data:', likeData);
+            const likedIds = likeData.liked_rentals.map((liked_rentals: LikeData) => liked_rentals.R_id);
+           
   
             if (slug && likedIds.includes(Number(slug))) {
               setFavorite(true);
@@ -226,13 +228,11 @@ import {
         const newFavoriteState = !prev;
         if (newFavoriteState) {
           addLike(id, token);
-          checkUserLike(token);
           console.log('收藏');
 
   
         } else {
           deleteLike(id, token);
-          checkUserLike(token);
           console.log('取消收藏');
         }
         return newFavoriteState;
@@ -351,6 +351,15 @@ import {
 
             <Divider/>
             <CardBody>
+              <h4 className="font-bold text-large">補充資訊</h4>
+              <Spacer y={2} />
+              <p>{rentalData?.title}</p>
+              
+            </CardBody>
+            <Divider/>
+
+            <Divider/>
+            <CardBody>
               <h4 className="font-bold text-large">{rentalData?.Type}</h4>
               
               <Spacer y={2} />
@@ -370,9 +379,9 @@ import {
 
             <Divider/>
             <CardBody>
-              <h4 className="font-bold text-large">租期 {rentalData?.RentalTerm}</h4>
+              <h4 className="font-bold text-large"> {rentalData?.RentalTerm}</h4>
               <Spacer y={2} />
-              <p>{rentalData?.Price}</p>
+              <p>{rentalData?.Price}/月</p>
             </CardBody>
             <Divider/>
 
