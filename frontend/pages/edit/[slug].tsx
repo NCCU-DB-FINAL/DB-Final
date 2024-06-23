@@ -94,7 +94,7 @@ export default function EditPage() {
               
                 setForm({
                   address: data.Address,
-                  title: data.title,
+                  title: data.Title,
                   price: data.Price,
                   type: data.Type,
                   bedroom: data.Bedroom.toString(),

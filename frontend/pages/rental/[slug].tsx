@@ -390,7 +390,7 @@ import {
             <CardBody>
               <h4 className="font-bold text-large">補充資訊</h4>
               <Spacer y={2} />
-              <p>{rentalData?.title}</p>
+              <p>{rentalData?.Title}</p>
               
             </CardBody>
             <Divider/>
