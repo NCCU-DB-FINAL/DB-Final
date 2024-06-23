@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 import { UserForm, UserFromInputProps } from "@/components/userForm";
 import { useAuth } from "@/components/hooks/useAuth";
@@ -63,6 +64,7 @@ export function LoginForm() {
         };
 
         login(user);
+        toast.success("登入成功");
 
         router.push("/");
       } else {
