@@ -276,8 +276,45 @@ import {
 
     data.Reviews = rentalData?.Reviews || [];
 
-    
-    
+    function convertToTaiwanTime(gmtTimeStr: string) {
+      const gmtDate = new Date(gmtTimeStr);
+      const options = {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      };
+      const formatter = new Intl.DateTimeFormat([], options);
+      return formatter.format(gmtDate);
+    }
+
+
+    data.Reviews = data.Reviews.map(review => ({
+      ...review,
+      Timestamp: convertToTaiwanTime(review.Timestamp)
+    }));
+
+
+    const convertToTaiwanDate = (gmtTimeStr: string) => {
+      const gmtDate = new Date(gmtTimeStr);
+      const options = {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+      };
+      const formatter = new Intl.DateTimeFormat('zh-TW', options);
+      return formatter.format(gmtDate);
+    };
+  
+    const time = rentalData?.PostDate ? convertToTaiwanDate(new Date(rentalData.PostDate).toISOString()) : '';
+
+
+
 
     const totalReviews = data.Reviews.length;
     const averageRating = data.Reviews.reduce((acc, review) => acc + review.Rating, 0) / totalReviews;
@@ -387,7 +424,7 @@ import {
 
             
             <CardFooter>
-              <p className="text-small text-default-500">發布日期 : {rentalData?.PostDate}</p>
+              <p className="text-small text-default-500">發布日期 : {time}</p>
             </CardFooter>
           </Card>
 
@@ -411,7 +448,7 @@ import {
               {(item) => (
                 <TableRow key={item.Comment}>
                   {(columnKey) => (
-                    <TableCell className={columnKey === "Comment" ? "text-left" : ""}>
+                    <TableCell className="text-left">
                       {columnKey === "Rating" ? (
                         <Rating
                           count={5}
