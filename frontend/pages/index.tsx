@@ -23,7 +23,7 @@ import { SearchBox } from "@/components/searchbox";
 
 export default function IndexPage() {
   const [isLoading, setIsLoading] = useState(false);
-
+  const [searchButtonState, setSearchButtonState] = useState(true);
   const searchAreaRef = useRef("");
   const searchMaxPingRef = useRef("");
   const searchMinPingRef = useRef("");
@@ -33,17 +33,29 @@ export default function IndexPage() {
   const priceOnChanges = [
     (value: string) => {
       searchMinPriceRef.current = value;
+      if (searchButtonState != isValidNumber(value)) {
+        setSearchButtonState(isValidNumber(value));
+      }
     },
     (value: string) => {
       searchMaxPriceRef.current = value;
+      if (searchButtonState != isValidNumber(value)) {
+        setSearchButtonState(isValidNumber(value));
+      }
     },
   ];
   const pingOnChanges = [
     (value: string) => {
       searchMinPingRef.current = value;
+      if (searchButtonState != isValidNumber(value)) {
+        setSearchButtonState(isValidNumber(value));
+      }
     },
     (value: string) => {
       searchMaxPingRef.current = value;
+      if (searchButtonState != isValidNumber(value)) {
+        setSearchButtonState(isValidNumber(value));
+      }
     },
   ];
 
@@ -144,7 +156,11 @@ export default function IndexPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Button color="primary" onClick={onSearch}>
+              <Button
+                color="primary"
+                isDisabled={!searchButtonState}
+                onClick={onSearch}
+              >
                 搜尋
               </Button>
             </div>
@@ -289,7 +305,21 @@ const InputPair = ({
   endContent = null,
   onValueChanges = [],
 }: InputPairProps) => {
+  // Use state to check format
+  const [minInvalid, setMinInvalid] = useState(false);
+  const [maxInvlaid, setMaxInvalid] = useState(false);
   const inputs = [];
+
+  const wrappers = [
+    (value: string) => {
+      setMinInvalid(!isValidNumber(value));
+      onValueChanges[0](value);
+    },
+    (value: string) => {
+      setMaxInvalid(!isValidNumber(value));
+      onValueChanges[1](value);
+    },
+  ];
 
   for (let i = 0; i < 2; i++) {
     inputs.push(
@@ -298,12 +328,13 @@ const InputPair = ({
           isClearable
           className={inputClassName}
           endContent={endContent}
+          errorMessage="請輸入數字"
           inputMode="numeric"
+          isInvalid={i === 0 ? minInvalid : maxInvlaid}
           placeholder={placeholder}
           startContent={startContent}
-          type="text"
           variant={variant}
-          onValueChange={onValueChanges[i]}
+          onValueChange={wrappers[i]}
         />
       </div>,
     );
@@ -356,7 +387,7 @@ const rentalColumns = [
   // },
   {
     key: "Title",
-    label: "標題",
+    label: "資訊",
   },
   {
     key: "Address",
@@ -398,4 +429,10 @@ const rentalColumns = [
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString("sv").slice(5).replace("-", "/");
+};
+
+const isValidNumber = (value: string) => {
+  if (value === "") return true; // Allow empty string as not set
+
+  return !isNaN(Number(value));
 };
