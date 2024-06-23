@@ -107,11 +107,11 @@ async function addLike(rental_id: number, token: string) {
   const res = await fetch(`${process.env.API_URL}/like`, {
     method: 'POST',
     headers: {
-      "content-type": "application/json",
       'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      rental_id
+      "rental_id": rental_id
     }),
   });
 
