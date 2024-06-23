@@ -4,16 +4,28 @@ import { SearchIcon } from "@/components/icons";
 
 interface SearchBoxProps {
   className: string;
+  placeholder: string;
+  inputRef?: React.MutableRefObject<string>;
 }
 
-export const SearchBox = ({ className }: SearchBoxProps) => (
-  <Input
-    isClearable
-    className={className}
-    placeholder="Search TODO"
-    startContent={
-      <SearchIcon className="text-black/50 mb-0.5 dark:text-white/90 text-slate-400 pointer-events-none flex-shrink-0" />
-    }
-    variant="faded"
-  />
-);
+export function SearchBox({
+  className,
+  placeholder,
+  inputRef,
+}: SearchBoxProps) {
+  function handleChange(value: string) {
+    if (!inputRef) return;
+    inputRef.current = value;
+  }
+
+  return (
+    <Input
+      isClearable
+      className={className}
+      placeholder={placeholder}
+      startContent={<SearchIcon />}
+      variant="bordered"
+      onValueChange={handleChange}
+    />
+  );
+}
