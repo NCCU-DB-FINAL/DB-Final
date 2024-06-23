@@ -44,7 +44,6 @@ function LikeForm() {
   const [sortOption, setSortOption] = useState('dateIncrease');
   const { user } = useAuth();
   const token = user?.token || "no_token";
-  console.log(token);
 
   useEffect(() => {
     async function getData() {
@@ -88,7 +87,6 @@ function LikeForm() {
     if (!confirmed) {
       return;
     }
-
     try {
       const response = await fetch(`${process.env.API_URL}/like`, {
         method: "DELETE",
@@ -96,7 +94,7 @@ function LikeForm() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ rental_id: likeToRemove.R_id })
+        body: JSON.stringify({ "rental_id": likeToRemove.R_id })
       });
       if (!response.ok) {
         throw new Error('Network response was not ok');
