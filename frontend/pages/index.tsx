@@ -397,5 +397,5 @@ const rentalColumns = [
 ];
 
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleString("sv").slice(5, 16);
+  return new Date(date).toLocaleDateString("sv").slice(5).replace("-", "/");
 };
