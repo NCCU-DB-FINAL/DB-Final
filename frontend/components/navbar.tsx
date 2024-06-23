@@ -14,6 +14,7 @@ import {
 import NextLink from "next/link";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 
 import { useAuth } from "./hooks/useAuth";
 
@@ -22,8 +23,14 @@ import { Logo } from "@/components/icons";
 
 export const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
 
   const { user, isLoggedIn, logout, getUserType } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   return (
     <NextUINavbar maxWidth="xl" position="sticky">
@@ -62,7 +69,7 @@ export const Navbar = () => {
               <User description={getUserType()} name={user?.name} />
             </NavbarItem>
             <NavbarItem className="lg:flex gap-3">
-              <Button variant="ghost" onClick={logout}>
+              <Button variant="ghost" onClick={handleLogout}>
                 登出
               </Button>
             </NavbarItem>
