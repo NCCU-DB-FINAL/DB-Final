@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 import DefaultLayout from "@/layouts/default";
 import { UserForm, UserFromInputProps } from "@/components/userForm";
@@ -61,7 +62,7 @@ function SignupForm() {
       );
 
       if (signupRes) {
-        // TODO: snackbar or something showing success
+        toast.success("註冊成功");
         router.push("/login");
       } else {
         window.alert("註冊失敗");
@@ -116,7 +117,7 @@ function SignupForm() {
       selectedType={selectedType}
       setSelectedType={setSelectedType}
       status={status}
-      subtitle="登入使用更多功能"
+      subtitle="註冊使用更多功能"
       title="歡迎"
     />
   );

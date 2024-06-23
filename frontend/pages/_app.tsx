@@ -11,6 +11,8 @@ import "@/styles/globals.css";
 
 import { User, UserContext } from "@/components/context/UserContext";
 
+import { Toaster } from "react-hot-toast";
+
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
 
@@ -30,6 +32,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <NextUIProvider navigate={router.push}>
         <NextThemesProvider>
           <Component {...pageProps} />
+          <Toaster />
         </NextThemesProvider>
       </NextUIProvider>
     </UserContext.Provider>

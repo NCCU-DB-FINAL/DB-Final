@@ -14,6 +14,7 @@ import {
 import NextLink from "next/link";
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 
 import { useAuth } from "./hooks/useAuth";
 
@@ -22,8 +23,22 @@ import { Logo } from "@/components/icons";
 
 export const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
 
   const { user, isLoggedIn, logout, getUserType } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
+  // Based on user type, show different nav items
+  // Tenant can see /likes
+  // Landlord can see /posts
+  const dynamicNavItems = siteConfig.navItems.filter(
+    (item) =>
+      (item.href === "/like" && user?.type == "tenant") ||
+      (item.href === "/post" && user?.type == "landlord"),
+  );
 
   return (
     <NextUINavbar maxWidth="xl" position="sticky">
@@ -35,7 +50,7 @@ export const Navbar = () => {
           </NextLink>
         </NavbarBrand>
         <div className="hidden lg:flex gap-4 justify-start ml-2">
-          {siteConfig.navItems.map((item) => (
+          {dynamicNavItems.map((item) => (
             <NavbarItem key={item.href} isActive={item.href === pathname}>
               <NextLink
                 className={clsx(
@@ -62,21 +77,22 @@ export const Navbar = () => {
               <User description={getUserType()} name={user?.name} />
             </NavbarItem>
             <NavbarItem className="lg:flex gap-3">
-              <Button variant="ghost" onClick={logout}>
+              <Button variant="ghost" onClick={handleLogout}>
                 登出
               </Button>
             </NavbarItem>
             <NavbarItem className="lg:flex gap-3">
-              {/* TODO: 只有房東能刊登 */}
-              <NextLink
-                className={buttonStyles({
-                  color: "primary",
-                  variant: "solid",
-                })}
-                href="/publish"
-              >
-                刊登
-              </NextLink>
+              {user?.type == "landlord" && (
+                <NextLink
+                  className={buttonStyles({
+                    color: "primary",
+                    variant: "solid",
+                  })}
+                  href="/publish"
+                >
+                  刊登
+                </NextLink>
+              )}
             </NavbarItem>
           </>
         ) : (
@@ -96,7 +112,7 @@ export const Navbar = () => {
 
       <NavbarMenu>
         <div className="mx-4 mt-2 flex flex-col gap-2">
-          {siteConfig.navMenuItems.map((item, index) => (
+          {dynamicNavItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
                 color={
