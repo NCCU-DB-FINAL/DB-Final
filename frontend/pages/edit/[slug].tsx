@@ -199,7 +199,7 @@ export default function EditPage() {
       <DefaultLayout>
         <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
           <div className="inline-block max-w-lg text-center justify-center">
-          <h1 className="text-5xl font-bold">請編輯{router.query.slug}房屋資料</h1>
+          <h1 className="text-5xl font-bold">編輯出租房屋資料</h1>
             <Spacer y={6} />
   
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
@@ -219,6 +219,8 @@ export default function EditPage() {
          
               <Select
                 label="鄉鎮[市]區"
+                defaultSelectedKeys={[selectedDistrict]}
+                selectedKeys={[selectedDistrict]}
                 value={selectedDistrict}                
                 onChange={(e) => handleDistrictChange(e.target.value)}
               >
