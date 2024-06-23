@@ -1,117 +1,121 @@
-import { SetStateAction, useState, useEffect } from "react";
-import { title } from "@/components/primitives";
+import { useState, useEffect } from "react";
 import DefaultLayout from "@/layouts/default";
 import { Button, ButtonGroup } from "@nextui-org/react";
 import { Select, SelectItem } from "@nextui-org/react";
+import { useRouter } from 'next/router';
+import { LookupIcon, DeleteIcon } from "@/components/icons";
+import { useAuth } from "@/components/hooks/useAuth";
 
 export default function LikePage() {
-  const [favorites, setFavorites] = useState([
-    {
-      id: 1,
-      name: "房屋名稱1",
-      address: "台北市文山區指南路二段64號",
-      price: "30,000",
-      size: "30",
-      rooms: "2房1廳",
-      date: "2022-05-21",
-    },
-    {
-      id: 2,
-      name: "房屋名稱2",
-      address: "台北市安區",
-      price: "20,000",
-      size: "20",
-      rooms: "2房1廳",
-      date: "2024-05-20",
-    },
-    {
-      id: 3,
-      name: "房屋名稱3",
-      address: "台北市大區",
-      price: "100,000",
-      size: "60",
-      rooms: "2房1廳",
-      date: "2026-05-19",
-    },
-    {
-      id: 4,
-      name: "房屋名稱4",
-      address: "台北市大安區政大台北市大安區政大台北市大安區政大台北市大安區政大",
-      price: "200,000",
-      size: "1000",
-      rooms: "2房1廳",
-      date: "2026-07-19",
-    },
-    {
-      id: 5,
-      name: "房屋名稱5",
-      address: "高雄市",
-      price: "10,000",
-      size: "50",
-      rooms: "2房1廳",
-      date: "2024-03-19",
-    },
-    {
-      id: 6,
-      name: "房屋名稱5",
-      address: "高雄市",
-      price: "10,000",
-      size: "50",
-      rooms: "2房1廳",
-      date: "2024-03-19",
-    },
-    {
-      id: 7,
-      name: "房屋名稱5",
-      address: "高雄市",
-      price: "10,000",
-      size: "50",
-      rooms: "2房1廳",
-      date: "2024-03-19",
-    }
-    // 更多房源
-  ]);
+  return (
+    <DefaultLayout>
+      <LikeForm />
+    </DefaultLayout>
+  );
+}
 
-  const [sortOption, setSortsortOption] = useState("dateDecrease");
+async function fetchInfo(token: string) {
+  // 发起 fetch 请求，并在请求头中包含 JWT 令牌
+  const response = await fetch(`${process.env.API_URL}/likes`, {
+    method: "GET",
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`Error`);
+  } else {
+    const data = await response.json();
+    return data;
+  }
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const month = date.getMonth() + 1; // getMonth 返回的是 0 到 11，所以要加 1
+  const day = date.getDate();
+  const year = date.getFullYear();
+
+  return `${year}/${month}/${day}`;
+}
+
+function LikeForm() {
+  const [likes, setLikes] = useState([]);
+  const [sortOption, setSortOption] = useState('dateIncrease');
+  const { user } = useAuth();
+  const token = user?.token || "no_token";
+
+  useEffect(() => {
+    async function getData() {
+      try {
+        const data = await fetchInfo(token);
+        setLikes(data.liked_rentals);
+      } catch (err) {
+        console.error("Error fetching likes: ", err);
+      }
+    }
+    if (token) {
+      getData();
+    }
+  }, [token]);
 
   useEffect(() => {
     sortBy(sortOption);
-  }, []);
+  }, [sortOption]);
 
-  const sortBy = (sortOption: SetStateAction<string>) => {
-    setSortsortOption(sortOption);
-    let sortedFavorites = [...favorites];
-    if (sortOption === "dateDecrease") {
-      sortedFavorites.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sortBy = (option: string) => {
+    setSortOption(option);
+    let sortedLikes = [...likes]; // Create a copy of state
+    if (option === "dateDecrease") {
+      sortedLikes.sort((a, b) => new Date(b.PostDate) - new Date(a.PostDate));
+    } else if (option === "dateIncrease") {
+      sortedLikes.sort((a, b) => new Date(a.PostDate) - new Date(b.PostDate));
+    } else if (option === "priceDecrease") {
+      sortedLikes.sort((a, b) => parseInt(b.Price) - parseInt(a.Price));
+    } else if (option === "priceIncrease") {
+      sortedLikes.sort((a, b) => parseInt(a.Price) - parseInt(b.Price));
+    } else if (option === "sizeDecrease") {
+      sortedLikes.sort((a, b) => parseInt(b.Ping) - parseInt(a.Ping));
+    } else if (option === "sizeIncrease") {
+      sortedLikes.sort((a, b) => parseInt(a.Ping) - parseInt(b.Ping));
     }
-    else if (sortOption === "dateIncrease") {
-      sortedFavorites.sort((a, b) => new Date(a.date) - new Date(b.date));
-    }
-    else if (sortOption === "priceDecrease") {
-      sortedFavorites.sort((a, b) => parseInt(b.price) - parseInt(a.price));
-    }
-    else if (sortOption === "priceIncrease") {
-      sortedFavorites.sort((a, b) => parseInt(a.price) - parseInt(b.price));
-    }
-    else if (sortOption === "sizeDecrease") {
-      sortedFavorites.sort((a, b) => parseInt(b.size) - parseInt(a.size));
-    }
-    else if (sortOption === "sizeIncrease") {
-      sortedFavorites.sort((a, b) => parseInt(a.size) - parseInt(b.size));
-    }
-    setFavorites(sortedFavorites);
+    setLikes(sortedLikes); // Update state with sorted array
   };
 
-  const removeFromFavorites = (id) => {
-    const updatedFavorites = favorites.filter((fav) => fav.id !== id);
-    setFavorites(updatedFavorites);
-    // 回傳給DB
+  const removeFromFavorites = async (likeToRemove) => {
+    const confirmed = window.confirm(`確定刪除房屋「${likeToRemove.Title}」？`);
+    if (!confirmed) {
+      return;
+    }
+    try {
+      const response = await fetch(`${process.env.API_URL}/like`, {
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ "rental_id": likeToRemove.R_id })
+      });
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await fetchInfo(token);
+      setLikes(data.liked_rentals);
+    } catch (error) {
+      console.error('Delete request failed:', error);
+    }
   };
+
+  const router = useRouter();
+  const handleLookup = (id: any) => {
+    router.push(`/rental/${id}`);
+  };
+
 
   return (
-    <DefaultLayout>
+    <div>
       <div className="w-64 mb-5 ml-4">
-        <Select label="選擇排序項目" placeholder="上架日期 新到舊" className="max-w-xs" value={sortOption} onChange={(sortOption) => sortBy(sortOption.target.value)}>
+        <Select label="選擇排序項目" placeholder="上架日期 舊到新" className="max-w-xs" value={sortOption} onChange={(sortOption) => sortBy(sortOption.target.value)}>
           <SelectItem value="dateDecrease" key="dateDecrease">上架日期 新到舊</SelectItem>
           <SelectItem value="dateIncrease" key="dateIncrease">上架日期 舊到新</SelectItem>
           <SelectItem value="priceDecrease" key="priceDecrease">價格 高到低</SelectItem>
@@ -121,32 +125,28 @@ export default function LikePage() {
         </Select>
       </div>
       <section className="favorites-list flex flex-wrap">
-        {favorites.map((fav) => (
-          <div key={fav.id} className="favorite-item border p-5 m-4 rounded-lg basis-64">
+        {likes.map((like) => (
+          <div key={like.R_id} className="favorite-item border p-5 m-4 rounded-lg basis-64">
             <div className="info text-left w-full mt-4">
-              <h2 className="text-lg font-semibold">{fav.name}</h2>
-              <p>地址：{fav.address}</p>
-              <p>價格：{fav.price}元/月</p>
-              <p>面積：{fav.size}平方公尺</p>
-              <p>房型：{fav.rooms}</p>
-              <p>上架日期：{fav.date}</p>
+              <h2 className="text-lg font-semibold">{like.Title}</h2>
+              <p>地址：{like.Address}</p>
+              <p>價格: {parseInt(like.Price)}/月</p>
+              <p>類型: {like.Type}</p>
+              <p>臥室數量: {like.Bedroom}</p>
+              <p>客廳數量: {like.LivingRoom}</p>
+              <p>浴室數量: {like.Bathroom}</p>
+              <p>坪數: {parseInt(like.Ping)}</p>
+              <p>上架日期: {formatDate(like.PostDate)}</p>
             </div>
             <div className="actions mt-2 ">
               <ButtonGroup>
-                <Button startContent={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
-                  <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
-                  <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
-                </svg>}>查看</Button>
-                <Button color="danger" variant="bordered" onClick={() => removeFromFavorites(fav.id)} startContent={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
-                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
-                </svg>}>刪除
-                </Button>
+                <Button onClick={() => handleLookup(like.R_id)} startContent={<LookupIcon />}>查看</Button>
+                <Button color="danger" variant="bordered" onClick={() => removeFromFavorites(like)} startContent={<DeleteIcon />}>刪除</Button>
               </ButtonGroup>
             </div>
           </div>
         ))}
       </section>
-    </DefaultLayout>
+    </div>
   );
 }
