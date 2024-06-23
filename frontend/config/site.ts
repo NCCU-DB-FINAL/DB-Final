@@ -14,11 +14,6 @@ export const siteConfig = {
       label: "我的出租",
       href: "/post",
     },
-    {
-      // TODO: Remove this
-      label: "API 測試",
-      href: "/apiTest",
-    },
   ],
   navMenuItems: [
     {
