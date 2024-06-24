@@ -68,6 +68,7 @@ export default function IndexPage() {
           min_ping: searchMinPingRef.current,
           max_price: searchMaxPriceRef.current,
           min_price: searchMinPriceRef.current,
+          sort_by: "PostDate DESC",
         }).toString(),
       {
         method: "GET",

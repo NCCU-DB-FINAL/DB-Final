@@ -14,8 +14,23 @@
 
 ---
 
-## 開發
-Run backend
+## How to run
+### 1. Run backend
 1. `git clone https://github.com/NCCU-DB-FINAL/backend.git`
-2. `python main.py`
+2. Create `.env` in the `backend` directory
+```shell
+# .env 
+DB_HOST=
+DB_USER=
+DB_PASSWORD=
+DB_NAME=rental_db
+```
+3. `pip install` packages. See README.md in the `backend` directory
+4. Run `python main.py`
+
+### 2. Run frontend
+1. Clone this repo
+2. `cd frontend`
+3. `npm install`
+4. `npm run dev`
 
