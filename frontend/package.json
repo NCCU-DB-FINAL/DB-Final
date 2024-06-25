@@ -6,7 +6,8 @@
 		"dev": "next dev",
 		"build": "next build",
 		"start": "next start",
-		"lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
+		"lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix",
+		"exp-build": "next build --experimental-build-mode compile"
 	},
 	"dependencies": {
 		"@nextui-org/react": "^2.3.6",
