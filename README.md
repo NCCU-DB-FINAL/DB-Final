@@ -9,7 +9,7 @@
 | 文件                                                                 |
 | ------------------------------------------------------------------ |
 | [專題題目說明](pdfs/專題題目說明_0512.pdf)                                          |
-| [ER model, relational schema](pdfs/ER_model_relational_schema.pdf) |
+| [ER model, relational schema 更新版](pdfs/ER_model_relational_schema_v2.pdf) |
 | [系統架構](pdfs/系統架構.pdf) |
 
 ---
